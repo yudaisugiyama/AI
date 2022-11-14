@@ -1,5 +1,5 @@
-from util import Logger
-from util import DataVisualization
+from utils import Logger
+from utils import DataVisualization
 from agent.model import LitEnvironment
 from agent.model import LitQNET
 from agent.policy import Greedy
@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 from pathlib import Path
 import os
-from constraint import Newton
+from const import Newton
 import csv
 
 @hydra.main(config_name='config', config_path='conf')
