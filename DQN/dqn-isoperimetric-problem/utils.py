@@ -133,13 +133,4 @@ class DataVisualization():
         self.anim_reset()
         img = self.render_animation(x, y)
         plt.savefig('result.png')
-
-    # def export_act_csv(self, path, data_frame):
-    #     with open(path, 'w') as f:
-    #         act_csv = csv.writer(f)
-    #         act_csv.writerow(data_frame)
-    #     for i in range(100):
-    #         with open(path, 'a') as f:
-    #             act_csv = csv.writer(f)
-    #             act_csv.writerow(data_frame[i:i])
                 
