@@ -1,13 +1,13 @@
 import hydra
-from util import Logger
+from utils import Logger
 from agent.model import LitQNET
 from agent.model import LitEnvironment
 from agent.policy import EpsilonGreedy
-from util import DataVisualization
+from utils import DataVisualization
 from tqdm import tqdm
 import torch
 import os
-from constraint import Newton
+from const import Newton
 
 @hydra.main(config_name='config', config_path='conf')
 def main(cfg):
