@@ -60,7 +60,7 @@ conda 22.9.0
 Anacondaのインストールの詳細は下記のサイトを参考にしてください.
 
 次に, githubから実装コードを取得します.
-gitを既にインストールされている場合はgit cloneで取得できます.
+gitを既にインストールされている場合はcloneコマンドで取得できます.
 
 ```cmd:cmd
 git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
@@ -90,7 +90,6 @@ conda env create -n test -f env.yml
 
 createに成功したらツールの用意が完了しました^^.
 
-
 # 調理*
 
 ## 仮想環境を有効化しよう！
@@ -103,7 +102,9 @@ createに成功したらツールの用意が完了しました^^.
 conda activate test
 ```
 
-## 構成
+## ディレクトリ構成内容
+
++++
 
 ## モデルをトレーニングさせよう！
 
@@ -122,13 +123,6 @@ conda activate test
 ```cmd:cmd
 python train.py
 ```
-
-下記のような出力まで表示されたらトレーニング成功です!
-
-[xxxx-xx-xx xx:xx:xx,xxx][utils][INFO] - weight pathの下に, 学習したデータが記録されたファイルが生成されます.
-
-次に行うテスト時に必要になるのでコピーしておきましょう!
-
 
 ```cmd:output
 [2022-11-14 17:36:58,509][utils][INFO] - total reward history
@@ -152,6 +146,8 @@ C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\
 50.377s
 ```
 
+では, トレーニングの履歴をグラフで見てみましょう.
+
 ## 学習済データを使ってテストしてみよう！
 
 テストを行う場合はtest.pyを実行します.
@@ -167,6 +163,27 @@ python test.py
 Enterを押して, テストを開始しましょう!
 
 ```cmd:cmd
-Input path of weight.pth-->
+Input path of weight.pth>
 ```
+
+報酬最大時の楕円の状態を最後に出力します.
+
+行動幅が0.01なので, 完全な円は求められませんが, ほぼ円の状態を導けていることがわかります.
+
+```cmd:cmd
+[1.51, 1.49]
+```
+
+ここでテスト時の状態履歴を見てみましょう.
+
++++
+
+## アルゴリズム
+
+## 行動価値更新式
+
+## $\epsilon$-greedy法
+
+## 学習条件
+
 
