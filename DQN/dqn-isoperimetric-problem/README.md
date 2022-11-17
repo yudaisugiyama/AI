@@ -1,0 +1,332 @@
+# メニュー*
+
+## 概要*
+
+このレシピでは, 等周問題に対する深層強化学習モデルの実装を試すことができます.
+
+ここでは, 実装コードのダウンロード $\rightarrow$ 仮想環境の複製 $\rightarrow$ アルゴリズムの解説 $\rightarrow$ 実行 という流れで進めます.
+
+
+**Deep Q-learning Network; DQN**では, **Convolutional Neural Network; CNN**を用いた画像の分類器と異なり, 学習データを必要としません.
+DQNは設計者が設定した環境とインタラクティブに学習することで, 試行錯誤のみで正解を導きます.
+
+今回取り扱う等周問題で前提とする定理は, 
+
+
+**"長さが一定である閉曲線$C$の中で, $C$が囲む面積が最大となるものは円である。"**
+
+
+というものです.
+
+DQNに与える環境は, 下記の楕円の式であり, $w$について ${+0.01, +0.00, -0.01}$を動かして, 最大面積となる形状を導出してもらいます.
+
+$$
+\frac{x^2}{w^2}+\frac{y^2}{h^2}=1 \tag{1}
+$$
+
+
+今回のレシピでは, DQNを実際に実装し, アルゴリズムの主要なポイントを紹介します^^
+
+## 学べること*
+
+このレシピを学ぶことで以下の手法を学ぶことができます.
+
+- Anacondaを利用した仮想環境での開発
+- Pytorchを利用した深層強化学習モデルの構築
+
+## 始める前のスキルセット*
+
+- Pythonの基礎知識
+
+## 実務活用例*
+
+- 自動運転技術
+- 将棋や囲碁などのゲームAIの作成
+
+# キッチン*
+
+## 開発環境*
+
+開発環境を記述してください。
+
+## ツール*
+
+- Anaconda 22.9.0のデフォルトライブラリ
+
+## データセット
+
+下記のサイトから**Anaconda**をインストールします.
+
+https://www.anaconda.com/products/distribution
+
+-Vオプションでバージョンを確認します.
+
+```cmd:cmd
+conda -V
+```
+
+下記のように出力されたらインストール成功です^^.
+
+```cmd:output
+conda 22.9.0
+```
+
+Anacondaのインストールの詳細は下記のサイトを参考にしてください.
+
+次に, **github**から実装コードを取得します.
+gitを既にインストールされている場合はcloneコマンドで取得できます.
+
+```cmd:cmd
+git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
+```
+
+gitが入っていない場合は, 
+
+https://github.com/yudaisugiyama/AI から<>code $\rightarrow$ Download ZIPでダウンロードして解凍してください.
+
+ダウンロードが完了したらenv.ymlから, 仮想環境の複製を行います.
+
+cdコマンドでenv.ymlが存在するディレクトリに移動してください.
+
+下記のコードはAIディレクトリから見た相対パスを例にしています.
+
+```cmd:cmd
+cd DQN/dqn-isoperimetric-problem
+```
+
+移動したら下記のコマンドで仮想環境の複製を行います.
+
+ここで, testは仮想環境の名前で任意の文字列です.
+
+```cmd:cmd
+conda env create -n test -f env.yml
+```
+
+createに成功したらツールの用意が完了しました^^.
+
+# 調理*
+
+## 仮想環境を有効化しよう！
+
+まず, 先ほど複製した仮想環境を有効化します.
+
+ここでも, testは仮想環境の名前であり, 複製した環境名と同じものを使ってください.
+
+```cmd:cmd
+conda activate test
+```
+
+## ディレクトリ構造
+```
+.
+├── __pycache__                 #  キャッシュ
+│   ├── const.cpython-38.pyc
+│   ├── constraint.cpython-38.pyc
+│   ├── constraint.cpython-39.pyc
+│   ├── train.cpython-39.pyc
+│   ├── util.cpython-38.pyc
+│   ├── util.cpython-39.pyc
+│   └── utils.cpython-38.pyc
+├── agent                       #　エージェント
+│   ├── __pycache__
+│   │   ├── model.cpython-38.pyc
+│   │   ├── model.cpython-39.pyc
+│   │   ├── policy.cpython-38.pyc
+│   │   └── policy.cpython-39.pyc
+│   ├── model.py    #　ネットワークやトレーニング方法の定義
+│   └── policy.py   #  方策の定義
+├── conf
+│   └── config.yaml             #　パラメータ管理
+├── const.py                    #  周長制約
+├── env.yml                     #  仮想環境
+├── outputs                     #  出力ファイル
+│   └── 2022-11-14
+│       ├── 15-55-47
+│       │   ├── loss.png
+│       │   ├── reward.png
+│       │   ├── train.log
+│       │   ├── warm_up.GIF
+│       │   └── weight.pth
+│       └── 16-03-59
+│           ├── result.png
+│           ├── reward.png
+│           ├── test.GIF
+│           └── test.log
+│
+├── README.md                   #  ドキュメンテーション
+├── test.py                     #  テスト実行ファイル
+├── train.py                    #  トレーニング実行ファイル
+└── utils.py                    #  グラフ作成など
+```
+
+## モデルをトレーニングさせよう！
+
+冒頭でも触れたように, DQNは学習データを必要としません.
+
+では, どうやって学習するのか?
+
+DQNは**強化学習(Reinforcement Learning; RL)アルゴリズム**の中でも価値ベースのアルゴリズムに分類されます.
+
+価値ベースのアルゴリズムとは方策$\pi$をfixし, 行動価値関数$Q$のみを学習によって改善します.
+
+代表としては**Q-learning**や**SARSA**が挙げられます.
+
+今回は, Q-learningを用いた実装をおこないます.
+
+**Temporal Difference; TD誤差**に基づいて, 初期値0の行動価値関数の更新を下記のように定義します. 
+
+$$
+Q(s,a)\leftarrow Q(s,a)+\alpha(r+\gamma max_{a'}Q(s',a')-Q(s,a)) \tag{2}
+$$
+
+ここで, $s,a,r,a',\alpha,\gamma$はそれぞれ状態, 行動, 報酬, 次に採用する行動, 学習率(ステップ幅), 割引率を表している.
+
+**状態**はその時の形状であり, $(w,h)\in s$で表されます.
+
+**行動**は, $w$について ${+0.01, +0.00, -0.01}$をおこなうものでしたね. どの行動を採用するかは**方策**$\pi$によって決定します.
+
+**報酬**は, 行動に対する環境からのフィードバックとしてもらうものであり, 行動前後の形状の面積差分を与える. つまり, 面積が大きくなれば正の報酬, 小さくなってしまったらペナルティとして負の報酬が帰ってきます.
+
+**学習率**は更新度合い, **割引率**は更新量の中でも, 将来の推定値を割り引くパラメーターです.
+
+では実際にコードの中身を見てみましょう^^
+
+方策のアルゴリズムは下記のような記述になっています.
+
+```python:policy.py
+import numpy as np
+import torch
+
+# トレーニング方策
+class EpsilonGreedy:
+    def __init__(self, model):
+        self.model = model
+        self.epsilon = self.model.epsilon
+
+    def get_action(self, state, actions_list):
+        # 任意で設定したepsilonの値未満の乱数が出た場合, True
+        is_random_action = (np.random.uniform()<self.epsilon)
+        # Trueの場合
+        if is_random_action:
+            q_values = None
+            state = torch.tensor(state).unsqueeze(0).float()
+            # 行動集合からランダムに決定
+            action_ind = np.random.randint(len(actions_list))
+        # Falseの場合
+        else:
+            state = torch.tensor(state).unsqueeze(0).float()
+            q_values = self.model.net(state, nn_model='main')
+            # 行動集合の中から最も行動価値が高い行動を採用
+            action_ind = torch.argmax(q_values, axis=1).item()
+
+        return action_ind
+
+# テスト方策
+class Greedy:
+    def __init__(self, model):
+        self.model = model
+        self.epsilon = self.model.epsilon
+
+    # 常に最も行動価値が高い行動を採用
+    def get_action(self, state, actions_list):
+        state = torch.tensor(state).unsqueeze(0).float()
+        q_values = self.model.net(state, nn_model='main')
+        action_ind = torch.argmax(q_values, axis=1).item()
+
+        return action_ind
+```
+
+```python:model.py
+# 行動 -> 報酬
+def step(self, state, actions_list, action_ind, total_reward, newton):
+    action = actions_list[action_ind]
+    next_state = [round(state[0]+action[0],self.round_digit), round(state[1],self.round_digit)]
+    action[1] = newton.newton_method(state[0], state[1], action[0])
+    next_state = [round(next_state[0],self.round_digit), round(action[1],self.round_digit)]
+    next_area = self.calc_area(next_state)
+    reward = next_area 
+    total_reward += reward
+
+    return next_state, action, reward, total_reward
+```
+
+```python:model.py
+# 更新量(TD誤差)の計算
+def calc_td_error(self, reward, next_state):
+    calculate = self.net(next_state, nn_model='main')
+    get_greedy_action = torch.argmax(calculate, axis=1)
+    max_q_values = self.net(next_state, nn_model='target')[
+        np.arange(self.batch_size), get_greedy_action
+    ]
+    td_error = (reward + self.gamma * max_q_values).float()
+
+    return td_error
+```
+
+
+上記のアルゴリズムを踏まえた上で, とりあえず動かしてみましょう^^
+
+まずはトレーニングを行うtrain.pyを実行します.
+
+*MacOSの場合はpython3コマンドを使用してください.
+
+```cmd:cmd
+python train.py
+```
+
+```cmd:output
+[2022-11-14 17:36:58,509][utils][INFO] - total reward history
+    total reward      loss
+0     208.653274  3.507581
+1     229.643826  3.035437
+2     239.498059  2.719864
+3     244.923276  2.548927
+4     236.284524  3.044429
+..           ...       ...
+95    687.290309       NaN
+96    685.052552       NaN
+97           NaN       NaN
+98    685.213402       NaN
+99    684.730853       NaN
+
+[100 rows x 2 columns]
+[2022-11-14 17:36:58,524][utils][INFO] - weight path
+C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+[2022-11-14 17:36:58,524][utils][INFO] - time
+50.377s
+```
+
+では, トレーニングの履歴をグラフで見てみましょう.
+
+## 学習済データを使ってテストしてみよう！
+
+テストを行う場合はtest.pyを実行します.
+
+```cmd:cmd
+python test.py
+```
+
+下記のようなインタープリターが表示されたら
+
+コピーしておいた重みファイルのパスを貼り付けます.
+
+Enterを押して, テストを開始しましょう!
+
+```cmd:cmd
+Input path of weight.pth>
+```
+
+報酬最大時の楕円の状態を最後に出力します.
+
+行動幅が0.01なので, 完全な円は求められませんが, ほぼ円の状態を導けていることがわかります.
+
+```cmd:cmd
+[1.51, 1.49]
+```
+
+ここでテスト時の状態履歴を見てみましょう.
+
++++
+
+
+
