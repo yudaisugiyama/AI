@@ -77,7 +77,7 @@ Anacondaのインストールの詳細は下記のサイトを参考にしてく
 gitを既にインストールされている場合はcloneコマンドで取得できます.
 
 ```cmd:cmd
-git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
+https://github.com/yudaisugiyama/AI
 ```
 
 gitが入っていない場合は, 
