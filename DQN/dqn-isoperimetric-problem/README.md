@@ -398,6 +398,7 @@ Input path of weight.pth>C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-pr
 ここでテスト時の履歴を見てみましょう.
 
 ![](https://api.axross-recipe.com/attachments/7fabf545-d7c7-48f2-a570-82614f09767b/url)
+
 <center>fig.4 形状履歴</center>
 <br>
 
@@ -422,4 +423,8 @@ $(w,h)$
 <center>fig.6 最適形状</center>
 <br>
 
-最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり$w$と$h$が同じになることがなかったためです. 
+最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり
+$w$
+と
+$h$
+が同じになることがなかったためです. 
