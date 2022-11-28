@@ -341,8 +341,12 @@ C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\
 になります.
 
 では, トレーニングの履歴のグラフで見てみましょう.
-![](https://api.axross-recipe.com/attachments/6b04dce2-7df2-4d0c-bf4a-97f2867da2eb/url)
-<center>fig.1 形状履歴</center>
+
+<p align="center">
+    <img src="https://api.axross-recipe.com/attachments/6b04dce2-7df2-4d0c-bf4a-97f2867da2eb/url" />
+    <br>  
+fig.1 形状履歴
+</p>
 <br>
 
 fig.1は学習初期の形状変更履歴を示しています. これはランダムに行動をして環境からのフィードバックをもらっている最中です.
