@@ -347,21 +347,22 @@ C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\
 
 fig.1は学習初期の形状変更履歴を示しています. これはランダムに行動をして環境からのフィードバックをもらっている最中です.
 
-
-
-![](https://api.axross-recipe.com/attachments/70f94026-e973-4d1d-aed4-47c49ef976ac/url)
-
-<center>fig.2 損失関数の履歴</center>
+<p align="center">
+    <img src="https://api.axross-recipe.com/attachments/70f94026-e973-4d1d-aed4-47c49ef976ac/url" />
+    <br>  
+fig.2 損失関数の履歴
+</p>
 <br>
 
 fig.2はトレーニング時の損失関数が0に収束して学習できていることを示しています.
 
 episode60後半からは, 損失関数が0になってしまっていますが, 問題が簡単なためこの時点で最適解は求まっていました.
 
-
-![](https://api.axross-recipe.com/attachments/230a0d97-d778-446d-a22a-2e4c3dd8fec4/url)
-
-<center>fig.3 エピソードごとの報酬和履歴</center>
+<p align="center">
+    <img src="https://api.axross-recipe.com/attachments/230a0d97-d778-446d-a22a-2e4c3dd8fec4/url" />
+    <br>  
+fig.3 エピソードごとの報酬和履歴
+</p>
 <br>
 
 fig.3はepisode60以降に急激に報酬が上がっていて, 学習が進んだことを示しています.
@@ -397,16 +398,21 @@ Input path of weight.pth>C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-pr
 
 ここでテスト時の履歴を見てみましょう.
 
-![](https://api.axross-recipe.com/attachments/7fabf545-d7c7-48f2-a570-82614f09767b/url)
-
-<center>fig.4 形状履歴</center>
+<p align="center">
+    <img src="https://api.axross-recipe.com/attachments/7fabf545-d7c7-48f2-a570-82614f09767b/url" />
+    <br>  
+fig.4 形状履歴
+</p>
 <br>
 
 fig.4は学習後の形状変更履歴を示しています. これは最も行動価値が高い行動のみを選択し, それが横幅を小さくする行動であることを示しています. 
 この形状変更に対する報酬のグラフは以下のようになります.
 
-![](https://api.axross-recipe.com/attachments/5e4daf01-4d6d-45f6-8d23-94f829b3a43d/url)
-<center>fig.5 報酬履歴</center>
+<p align="center">
+    <img src="https://api.axross-recipe.com/attachments/5e4daf01-4d6d-45f6-8d23-94f829b3a43d/url" />
+    <br>  
+fig.5 報酬履歴
+</p>
 <br>
 
 epoch50付近で上に凸の形のグラフになりました. 報酬は面積が大きくなるほど多くもらえるものでしたから, この履歴から最大報酬時の形状が円であれば最適化できているということになります.
