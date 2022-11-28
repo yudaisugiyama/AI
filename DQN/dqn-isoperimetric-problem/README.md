@@ -420,7 +420,8 @@ $(w,h)$
 ```
 
 ![](https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url)
-<center>fig.6 最適形状</center>
+
+<div style="text-align:center">fig.6 最適形状</div>
 <br>
 
 最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり
