@@ -77,7 +77,7 @@ Anacondaのインストールの詳細は下記のサイトを参考にしてく
 gitを既にインストールされている場合はcloneコマンドで取得できます.
 
 ```cmd:cmd
-https://github.com/yudaisugiyama/AI
+git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
 ```
 
 gitが入っていない場合は, 
@@ -189,6 +189,14 @@ $$
 
 **学習率**は更新度合い, **割引率**は更新量の中でも, 将来の推定値を割り引くパラメーターです.
 
+DQNは上記の式をニューラルネットワークでモデリングして, 考えます. 式(2)の右辺と左辺の二乗誤差を損失関数として, Adamで最小化します. 
+
+$$
+L(w)=(r+\gamma_{a'}Q(s',a';w)-Q(s,a;w))^2 \tag{3}
+$$
+
+Adamとは機械学習で最も多く用いられる最適化手法の1つです.
+
 では実際にコードの中身を見てみましょう^^
 
 方策のアルゴリズムは下記のような記述になっています.
@@ -236,8 +244,10 @@ class Greedy:
         return action_ind
 ```
 
+
+
 ```python:model.py
-# 行動 -> 報酬
+# 行動から報酬をもらうまでの流れ
 def step(self, state, actions_list, action_ind, total_reward, newton):
     action = actions_list[action_ind]
     next_state = [round(state[0]+action[0],self.round_digit), round(state[1],self.round_digit)]
@@ -251,7 +261,17 @@ def step(self, state, actions_list, action_ind, total_reward, newton):
 ```
 
 ```python:model.py
-# 更新量(TD誤差)の計算
+# 式(2)の左辺の計算
+def calc_current_q_values(self, state, action):
+    q_values = self.net(state, nn_model='main')[
+        np.arange(self.batch_size), action
+    ]
+
+    return q_values
+```
+
+```python:model.py
+# 式(2)の右辺の計算
 def calc_td_error(self, reward, next_state):
     calculate = self.net(next_state, nn_model='main')
     get_greedy_action = torch.argmax(calculate, axis=1)
@@ -263,12 +283,28 @@ def calc_td_error(self, reward, next_state):
     return td_error
 ```
 
+```python:model.py
+# 損失関数の計算
+    def update_main_network(self, q_values, td_error):
+        loss = self.loss_function(q_values, td_error)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+```
+ここで, 誤差関数の計算にはPytorchのtorch.nn.SmoothL1Loss()を使っています.
+
+```python:model.py
+self.loss_function = torch.nn.SmoothL1Loss()
+```
+
 
 上記のアルゴリズムを踏まえた上で, とりあえず動かしてみましょう^^
 
 まずはトレーニングを行うtrain.pyを実行します.
 
-*MacOSの場合はpython3コマンドを使用してください.
+*Linux, Macの場合はpython3コマンドを使用してください.
 
 ```cmd:cmd
 python train.py
@@ -295,8 +331,45 @@ C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\
 [2022-11-14 17:36:58,524][utils][INFO] - time
 50.377s
 ```
+トレーニングによって最適化された重みパラメータを記録しているファイルが生成され,
+[xxxx-xx-xx xx:xx:xx,xxx][utils][INFO] - weight pathの下にそのファイルのパスが出力されるので, コピーしておきましょう. テスト時にパスを入力します.
 
-では, トレーニングの履歴をグラフで見てみましょう.
+上記の例では, ファイルのパスは,
+
+C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+
+になります.
+
+では, トレーニングの履歴のグラフで見てみましょう.
+![](https://api.axross-recipe.com/attachments/6b04dce2-7df2-4d0c-bf4a-97f2867da2eb/url)
+<center>fig.1 形状履歴</center>
+<br>
+
+fig.1は学習初期の形状変更履歴を示しています. これはランダムに行動をして環境からのフィードバックをもらっている最中です.
+
+
+
+![](https://api.axross-recipe.com/attachments/70f94026-e973-4d1d-aed4-47c49ef976ac/url)
+
+<center>fig.2 損失関数の履歴</center>
+<br>
+
+fig.2はトレーニング時の損失関数が0に収束して学習できていることを示しています.
+
+episode60後半からは, 損失関数が0になってしまっていますが, 問題が簡単なためこの時点で最適解は求まっていました.
+
+
+![](https://api.axross-recipe.com/attachments/230a0d97-d778-446d-a22a-2e4c3dd8fec4/url)
+
+<center>fig.3 エピソードごとの報酬和履歴</center>
+<br>
+
+fig.3はepisode60以降に急激に報酬が上がっていて, 学習が進んだことを示しています.
+
+
+
+
+
 
 ## 学習済データを使ってテストしてみよう！
 
@@ -316,17 +389,35 @@ Enterを押して, テストを開始しましょう!
 Input path of weight.pth>
 ```
 
+```cmd:cmd_example
+Input path of weight.pth>C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+```
+
 報酬最大時の楕円の状態を最後に出力します.
 
-行動幅が0.01なので, 完全な円は求められませんが, ほぼ円の状態を導けていることがわかります.
+ここでテスト時の履歴を見てみましょう.
+
+![](https://api.axross-recipe.com/attachments/7fabf545-d7c7-48f2-a570-82614f09767b/url)
+<center>fig.4 形状履歴</center>
+<br>
+
+fig.4は学習後の形状変更履歴を示しています. これは最も行動価値が高い行動のみを選択し, それが横幅を小さくする行動であることを示しています. 
+この形状変更に対する報酬のグラフは以下のようになります.
+
+![](https://api.axross-recipe.com/attachments/5e4daf01-4d6d-45f6-8d23-94f829b3a43d/url)
+<center>fig.5 報酬履歴</center>
+<br>
+
+epoch50付近で上に凸の形のグラフになりました. 報酬は面積が大きくなるほど多くもらえるものでしたから, この履歴から最大報酬時の形状が円であれば最適化できているということになります.
+
+報酬最大時の形状$(w,h)$は, 下記の値になりました.
 
 ```cmd:cmd
 [1.51, 1.49]
 ```
 
-ここでテスト時の状態履歴を見てみましょう.
+![](https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url)
+<center>fig.6 最適形状</center>
+<br>
 
-+++
-
-
-
+最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり$w$と$h$が同じになることがなかったためです. 
