@@ -422,7 +422,7 @@ $(w,h)$
 <p align="center">
     <img src="https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url" />
     
-    fig.6 最適形状
+fig.6 最適形状
 </p>
 <br>
 
