@@ -420,10 +420,9 @@ $(w,h)$
 ```
 
 <p align="center">
-    <img src="https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url" />
-<!-- ![](https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url) -->
-
-fig.6 最適形状</>
+<img src="https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url" />
+fig.6 最適形状
+</p>
 <br>
 
 最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり
