@@ -419,9 +419,10 @@ $(w,h)$
 [1.51, 1.49]
 ```
 
+<p align="center">
 ![](https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url)
 
-<p align="center">fig.6 最適形状</>
+fig.6 最適形状</>
 <br>
 
 最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり
