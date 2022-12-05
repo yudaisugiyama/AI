@@ -1,0 +1,425 @@
+# メニュー*
+
+## 概要*
+
+CIFAR-10を使用した画像分類器の生成を**Google Colaboratory**+**TensorBoard**で実装します.
+
+ここでは, 環境構築 $\rightarrow$ 解説しながら実行 という流れで進めます.
+
+
+**CIFAR-10**とは動物や乗り物の画像を集めたオープンデータセットであり, ニューラルネットワークの画像認識用データに最も多く用いられるデータセットの1つです.
+
+今回取り扱うネットワークは**AlexNet**と**ResNet**です.
+上記のネットワークを**Pytorch**で実装し, トレーニングからテストまでをおこないます.
+
+トレーニング中の様子は**TendorFlow**の視覚化ツールキット**TensorBoard**
+
+DQNに与える環境は, 下記の楕円の式であり, $w$について ${+0.01, +0.00, -0.01}$を動かして, 最大面積となる形状を導出してもらいます.
+
+$$
+\frac{x^2}{w^2}+\frac{y^2}{h^2}=1 \tag{1}
+$$
+
+
+今回のレシピでは, DQNを実際に実装し, アルゴリズムの主要なポイントを紹介します^^
+
+## 学べること*
+
+このレシピを学ぶことで以下の手法を学ぶことができます.
+
+- Anacondaを利用した仮想環境での開発
+- Pytorchを利用した深層強化学習モデルの構築
+
+## 始める前のスキルセット*
+
+- Pythonの基礎知識
+
+## 実務活用例*
+
+- 自動運転技術
+- 将棋や囲碁などのゲームAIの作成
+
+# キッチン*
+
+## 開発環境*
+
+開発環境を記述してください。
+
+## ツール*
+
+- Anaconda 22.9.0のデフォルトライブラリ
+
+## データセット
+
+下記のサイトから**Anaconda**をインストールします.
+
+https://www.anaconda.com/products/distribution
+
+-Vオプションでバージョンを確認します.
+
+```cmd:cmd
+conda -V
+```
+
+下記のように出力されたらインストール成功です^^.
+
+```cmd:output
+conda 22.9.0
+```
+
+Anacondaのインストールの詳細は下記のサイトを参考にしてください.
+
+次に, **github**から実装コードを取得します.
+gitを既にインストールされている場合はcloneコマンドで取得できます.
+
+```cmd:cmd
+git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
+```
+
+gitが入っていない場合は, 
+
+https://github.com/yudaisugiyama/AI から<>code $\rightarrow$ Download ZIPでダウンロードして解凍してください.
+
+ダウンロードが完了したらenv.ymlから, 仮想環境の複製を行います.
+
+cdコマンドでenv.ymlが存在するディレクトリに移動してください.
+
+下記のコードはAIディレクトリから見た相対パスを例にしています.
+
+```cmd:cmd
+cd DQN/dqn-isoperimetric-problem
+```
+
+移動したら下記のコマンドで仮想環境の複製を行います.
+
+ここで, testは仮想環境の名前で任意の文字列です.
+
+```cmd:cmd
+conda env create -n test -f env.yml
+```
+
+createに成功したらツールの用意が完了しました^^.
+
+# 調理*
+
+## 仮想環境を有効化しよう！
+
+まず, 先ほど複製した仮想環境を有効化します.
+
+ここでも, testは仮想環境の名前であり, 複製した環境名と同じものを使ってください.
+
+```cmd:cmd
+conda activate test
+```
+
+## ディレクトリ構造
+```
+.
+├── __pycache__                 #  キャッシュ
+│   ├── const.cpython-38.pyc
+│   ├── constraint.cpython-38.pyc
+│   ├── constraint.cpython-39.pyc
+│   ├── train.cpython-39.pyc
+│   ├── util.cpython-38.pyc
+│   ├── util.cpython-39.pyc
+│   └── utils.cpython-38.pyc
+├── agent                       #　エージェント
+│   ├── __pycache__
+│   │   ├── model.cpython-38.pyc
+│   │   ├── model.cpython-39.pyc
+│   │   ├── policy.cpython-38.pyc
+│   │   └── policy.cpython-39.pyc
+│   ├── model.py    #　ネットワークやトレーニング方法の定義
+│   └── policy.py   #  方策の定義
+├── conf
+│   └── config.yaml             #　パラメータ管理
+├── const.py                    #  周長制約
+├── env.yml                     #  仮想環境
+├── outputs                     #  出力ファイル
+│   └── 2022-11-14
+│       ├── 15-55-47
+│       │   ├── loss.png
+│       │   ├── reward.png
+│       │   ├── train.log
+│       │   ├── warm_up.GIF
+│       │   └── weight.pth
+│       └── 16-03-59
+│           ├── result.png
+│           ├── reward.png
+│           ├── test.GIF
+│           └── test.log
+│
+├── README.md                   #  ドキュメンテーション
+├── test.py                     #  テスト実行ファイル
+├── train.py                    #  トレーニング実行ファイル
+└── utils.py                    #  グラフ作成など
+```
+
+## モデルをトレーニングさせよう！
+
+冒頭でも触れたように, DQNは学習データを必要としません.
+
+では, どうやって学習するのか?
+
+DQNは**強化学習(Reinforcement Learning; RL)アルゴリズム**の中でも価値ベースのアルゴリズムに分類されます.
+
+価値ベースのアルゴリズムとは方策$\pi$をfixし, 行動価値関数$Q$のみを学習によって改善します.
+
+代表としては**Q-learning**や**SARSA**が挙げられます.
+
+今回は, Q-learningを用いた実装をおこないます.
+
+**Temporal Difference; TD誤差**に基づいて, 初期値0の行動価値関数の更新を下記のように定義します. 
+
+$$
+Q(s,a)\leftarrow Q(s,a)+\alpha(r+\gamma max_{a'}Q(s',a')-Q(s,a)) \tag{2}
+$$
+
+ここで, $s,a,r,a',\alpha,\gamma$はそれぞれ状態, 行動, 報酬, 次に採用する行動, 学習率(ステップ幅), 割引率を表している.
+
+**状態**はその時の形状であり, $(w,h)\in s$で表されます.
+
+**行動**は, $w$について ${+0.01, +0.00, -0.01}$をおこなうものでしたね. どの行動を採用するかは**方策**$\pi$によって決定します.
+
+**報酬**は, 行動に対する環境からのフィードバックとしてもらうものであり, 行動前後の形状の面積差分を与える. つまり, 面積が大きくなれば正の報酬, 小さくなってしまったらペナルティとして負の報酬が帰ってきます.
+
+**学習率**は更新度合い, **割引率**は更新量の中でも, 将来の推定値を割り引くパラメーターです.
+
+DQNは上記の式をニューラルネットワークでモデリングして, 考えます. 式(2)の右辺と左辺の二乗誤差を損失関数として, Adamで最小化します. 
+
+$$
+L(w)=(r+\gamma_{a'}Q(s',a';w)-Q(s,a;w))^2 \tag{3}
+$$
+
+Adamとは機械学習で最も多く用いられる最適化手法の1つです.
+
+では実際にコードの中身を見てみましょう^^
+
+方策のアルゴリズムは下記のような記述になっています.
+
+```python:policy.py
+import numpy as np
+import torch
+
+# トレーニング方策
+class EpsilonGreedy:
+    def __init__(self, model):
+        self.model = model
+        self.epsilon = self.model.epsilon
+
+    def get_action(self, state, actions_list):
+        # 任意で設定したepsilonの値未満の乱数が出た場合, True
+        is_random_action = (np.random.uniform()<self.epsilon)
+        # Trueの場合
+        if is_random_action:
+            q_values = None
+            state = torch.tensor(state).unsqueeze(0).float()
+            # 行動集合からランダムに決定
+            action_ind = np.random.randint(len(actions_list))
+        # Falseの場合
+        else:
+            state = torch.tensor(state).unsqueeze(0).float()
+            q_values = self.model.net(state, nn_model='main')
+            # 行動集合の中から最も行動価値が高い行動を採用
+            action_ind = torch.argmax(q_values, axis=1).item()
+
+        return action_ind
+
+# テスト方策
+class Greedy:
+    def __init__(self, model):
+        self.model = model
+        self.epsilon = self.model.epsilon
+
+    # 常に最も行動価値が高い行動を採用
+    def get_action(self, state, actions_list):
+        state = torch.tensor(state).unsqueeze(0).float()
+        q_values = self.model.net(state, nn_model='main')
+        action_ind = torch.argmax(q_values, axis=1).item()
+
+        return action_ind
+```
+
+
+
+```python:model.py
+# 行動から報酬をもらうまでの流れ
+def step(self, state, actions_list, action_ind, total_reward, newton):
+    action = actions_list[action_ind]
+    next_state = [round(state[0]+action[0],self.round_digit), round(state[1],self.round_digit)]
+    action[1] = newton.newton_method(state[0], state[1], action[0])
+    next_state = [round(next_state[0],self.round_digit), round(action[1],self.round_digit)]
+    next_area = self.calc_area(next_state)
+    reward = next_area 
+    total_reward += reward
+
+    return next_state, action, reward, total_reward
+```
+
+```python:model.py
+# 式(2)の左辺の計算
+def calc_current_q_values(self, state, action):
+    q_values = self.net(state, nn_model='main')[
+        np.arange(self.batch_size), action
+    ]
+
+    return q_values
+```
+
+```python:model.py
+# 式(2)の右辺の計算
+def calc_td_error(self, reward, next_state):
+    calculate = self.net(next_state, nn_model='main')
+    get_greedy_action = torch.argmax(calculate, axis=1)
+    max_q_values = self.net(next_state, nn_model='target')[
+        np.arange(self.batch_size), get_greedy_action
+    ]
+    td_error = (reward + self.gamma * max_q_values).float()
+
+    return td_error
+```
+
+```python:model.py
+# 損失関数の計算
+    def update_main_network(self, q_values, td_error):
+        loss = self.loss_function(q_values, td_error)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+```
+ここで, 誤差関数の計算にはPytorchのtorch.nn.SmoothL1Loss()を使っています.
+
+```python:model.py
+self.loss_function = torch.nn.SmoothL1Loss()
+```
+
+
+上記のアルゴリズムを踏まえた上で, とりあえず動かしてみましょう^^
+
+まずはトレーニングを行うtrain.pyを実行します.
+
+*Linux, Macの場合はpython3コマンドを使用してください.
+
+```cmd:cmd
+python train.py
+```
+
+```cmd:output
+[2022-11-14 17:36:58,509][utils][INFO] - total reward history
+    total reward      loss
+0     208.653274  3.507581
+1     229.643826  3.035437
+2     239.498059  2.719864
+3     244.923276  2.548927
+4     236.284524  3.044429
+..           ...       ...
+95    687.290309       NaN
+96    685.052552       NaN
+97           NaN       NaN
+98    685.213402       NaN
+99    684.730853       NaN
+
+[100 rows x 2 columns]
+[2022-11-14 17:36:58,524][utils][INFO] - weight path
+C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+[2022-11-14 17:36:58,524][utils][INFO] - time
+50.377s
+```
+トレーニングによって最適化された重みパラメータを記録しているファイルが生成され,
+[xxxx-xx-xx xx:xx:xx,xxx][utils][INFO] - weight pathの下にそのファイルのパスが出力されるので, コピーしておきましょう. テスト時にパスを入力します.
+
+上記の例では, ファイルのパスは,
+
+C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+
+になります.
+
+では, トレーニングの履歴のグラフで見てみましょう.
+![](https://api.axross-recipe.com/attachments/6b04dce2-7df2-4d0c-bf4a-97f2867da2eb/url)
+<center>fig.1 形状履歴</center>
+<br>
+
+fig.1は学習初期の形状変更履歴を示しています. これはランダムに行動をして環境からのフィードバックをもらっている最中です.
+
+
+
+![](https://api.axross-recipe.com/attachments/70f94026-e973-4d1d-aed4-47c49ef976ac/url)
+
+<center>fig.2 損失関数の履歴</center>
+<br>
+
+fig.2はトレーニング時の損失関数が0に収束して学習できていることを示しています.
+
+episode60後半からは, 損失関数が0になってしまっていますが, 問題が簡単なためこの時点で最適解は求まっていました.
+
+
+![](https://api.axross-recipe.com/attachments/230a0d97-d778-446d-a22a-2e4c3dd8fec4/url)
+
+<center>fig.3 エピソードごとの報酬和履歴</center>
+<br>
+
+fig.3はepisode60以降に急激に報酬が上がっていて, 学習が進んだことを示しています.
+
+
+
+
+
+
+## 学習済データを使ってテストしてみよう！
+
+テストを行う場合はtest.pyを実行します.
+
+```cmd:cmd
+python test.py
+```
+
+下記のようなインタープリターが表示されたら
+
+コピーしておいた重みファイルのパスを貼り付けます.
+
+Enterを押して, テストを開始しましょう!
+
+```cmd:cmd
+Input path of weight.pth>
+```
+
+```cmd:cmd_example
+Input path of weight.pth>C:\Users\fogefoge\Documents\AI\DQN\dqn-isoperimetric-problem\outputs\2022-11-14\17-36-08/weight.pth
+```
+
+報酬最大時の楕円の状態を最後に出力します.
+
+ここでテスト時の履歴を見てみましょう.
+
+![](https://api.axross-recipe.com/attachments/7fabf545-d7c7-48f2-a570-82614f09767b/url)
+<center>fig.4 形状履歴</center>
+<br>
+
+fig.4は学習後の形状変更履歴を示しています. これは最も行動価値が高い行動のみを選択し, それが横幅を小さくする行動であることを示しています. 
+この形状変更に対する報酬のグラフは以下のようになります.
+
+![](https://api.axross-recipe.com/attachments/5e4daf01-4d6d-45f6-8d23-94f829b3a43d/url)
+<center>fig.5 報酬履歴</center>
+<br>
+
+epoch50付近で上に凸の形のグラフになりました. 報酬は面積が大きくなるほど多くもらえるものでしたから, この履歴から最大報酬時の形状が円であれば最適化できているということになります.
+
+報酬最大時の形状$(w,h)$は, 下記の値になりました.
+
+```cmd:cmd
+[1.51, 1.49]
+```
+
+![](https://api.axross-recipe.com/attachments/1735d586-da5c-43d9-b874-38365dbdf69e/url)
+<center>fig.6 最適形状</center>
+<br>
+
+最適形状はfig.6に示すように, ほぼ円となりました. 完璧な円を求められない理由は, 行動の幅が0.01であることと, 周長の制約により, ぴったり$w$と$h$が同じになることがなかったためです. 
+
+深層強化学習を研究していて思うのは, 大雑把な最適化の実装は簡単ですが, 複雑なモデル(今回は設計変数が2の楕円だが, 設計変数が多い場合)に対しての実装は難易度も上がり, パラメータ数が増えるので学習時間も多くなります. その結果, 学習がきちんと収束してくれなかったりすることもあります.
+
+今後はこのレシピを参考に, 複雑なモデルに対する深層強化学習の実装などにトライしてもらえれば幸いです!
+
+ご覧いただきありがとうございました^^
