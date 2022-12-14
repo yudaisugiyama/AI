@@ -59,7 +59,7 @@ CIFAR-10を使用した画像分類器の生成を**Google Colaboratory**+**Tens
 まず, ランタイム>ランタイムのタイプを変更>ハードウェア アクセラレータを"GPU"に変更してください.
 
 
-```python:sourcecode.ipynb
+```python:
 !nvidia-smi
 ```
 上記のコマンドブロックを実行して以下のような出力がでれば成功です. 
