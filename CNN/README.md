@@ -4,31 +4,23 @@
 
 CIFAR-10を使用した画像分類器の生成を**Google Colaboratory**+**TensorBoard**で実装します.
 
-ここでは, 環境構築 $\rightarrow$ 解説しながら実行 という流れで進めます.
+ここでは, 環境構築から実行, ネットワークアーキテクチャの解説をします.
 
 
-**CIFAR-10**とは動物や乗り物の画像を集めたオープンデータセットであり, ニューラルネットワークの画像認識用データに最も多く用いられるデータセットの1つです.
+前提として, **CIFAR-10**とは動物や乗り物の画像を集めたオープンデータセットであり, ニューラルネットワークの画像認識用データに最も多く用いられるデータセットの1つです.
 
 今回取り扱うネットワークは**AlexNet**と**ResNet**です.
 上記のネットワークを**Pytorch**で実装し, トレーニングからテストまでをおこないます.
 
-トレーニング中の様子は**TendorFlow**の視覚化ツールキット**TensorBoard**
-
-DQNに与える環境は, 下記の楕円の式であり, $w$について ${+0.01, +0.00, -0.01}$を動かして, 最大面積となる形状を導出してもらいます.
-
-$$
-\frac{x^2}{w^2}+\frac{y^2}{h^2}=1 \tag{1}
-$$
-
-
-今回のレシピでは, DQNを実際に実装し, アルゴリズムの主要なポイントを紹介します^^
+トレーニング中の様子は**TendorFlow**の視覚化ツールキット**TensorBoard**を実装して確認していきます！
 
 ## 学べること*
 
 このレシピを学ぶことで以下の手法を学ぶことができます.
 
-- Anacondaを利用した仮想環境での開発
-- Pytorchを利用した深層強化学習モデルの構築
+- Google Colaboratoryでの開発
+- TensorBoardの実装
+- Pytorchを利用したCNNの実装
 
 ## 始める前のスキルセット*
 
@@ -36,124 +28,92 @@ $$
 
 ## 実務活用例*
 
-- 自動運転技術
-- 将棋や囲碁などのゲームAIの作成
+- 画像認識(コンピュータービジョン)
 
 # キッチン*
 
 ## 開発環境*
 
-開発環境を記述してください。
+- Google Colaboratory
+- Ubuntu 18.04.6 LTS
+- TeslaT4
+- Pytorch==1.12.1
 
 ## ツール*
 
-- Anaconda 22.9.0のデフォルトライブラリ
+- Google Colaboratoryのデフォルトライブラリ
 
 ## データセット
 
-下記のサイトから**Anaconda**をインストールします.
 
-https://www.anaconda.com/products/distribution
+ソースコードを[こちら](https://colab.research.google.com/drive/1wEK-ta-3APQF28ZyCZfNtURjnmC4lSxP?usp=sharing)で確認しましょう.
 
--Vオプションでバージョンを確認します.
+閲覧権限しかないので, 編集する場合はコピーしてください.
 
-```cmd:cmd
-conda -V
-```
-
-下記のように出力されたらインストール成功です^^.
-
-```cmd:output
-conda 22.9.0
-```
-
-Anacondaのインストールの詳細は下記のサイトを参考にしてください.
-
-次に, **github**から実装コードを取得します.
-gitを既にインストールされている場合はcloneコマンドで取得できます.
-
-```cmd:cmd
-git clone https://github.com/yudaisugiyama/AI/tree/main/DQN/dqn-isoperimetric-problem.git
-```
-
-gitが入っていない場合は, 
-
-https://github.com/yudaisugiyama/AI から<>code $\rightarrow$ Download ZIPでダウンロードして解凍してください.
-
-ダウンロードが完了したらenv.ymlから, 仮想環境の複製を行います.
-
-cdコマンドでenv.ymlが存在するディレクトリに移動してください.
-
-下記のコードはAIディレクトリから見た相対パスを例にしています.
-
-```cmd:cmd
-cd DQN/dqn-isoperimetric-problem
-```
-
-移動したら下記のコマンドで仮想環境の複製を行います.
-
-ここで, testは仮想環境の名前で任意の文字列です.
-
-```cmd:cmd
-conda env create -n test -f env.yml
-```
-
-createに成功したらツールの用意が完了しました^^.
+使用したcifar-10のデータセットは[こちら](http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz)からダウンロードできます！
 
 # 調理*
 
-## 仮想環境を有効化しよう！
+## GPUを設定しよう！
 
-まず, 先ほど複製した仮想環境を有効化します.
+まず, ランタイム>ランタイムのタイプを変更>ハードウェア アクセラレータを"GPU"に変更してください.
 
-ここでも, testは仮想環境の名前であり, 複製した環境名と同じものを使ってください.
 
-```cmd:cmd
-conda activate test
+```python:sourcecode.ipynb
+!nvidia-smi
+```
+上記のコマンドブロックを実行して以下のような出力がでれば成功です. 
+Google Colaboratoryでコードブロックを実行する場合, 実行したいブロックをクリックしてアクティブにしてShift + Enterで実行できます♪
+
+```
+Sun Dec 11 10:00:01 2022       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 460.32.03    Driver Version: 460.32.03    CUDA Version: 11.2     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla T4            Off  | 00000000:00:04.0 Off |                    0 |
+| N/A   62C    P0    30W /  70W |      0MiB / 15109MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
 ```
 
 ## ディレクトリ構造
 
+```python:sourcecode.ipynb
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+上記のコマンドブロックを実行してグーグルドライブと接続してください.
+
+ドライブ内のディレクトリ構造は以下のようになります.
+
 ```
 .
-├── __pycache__                 #  キャッシュ
-│   ├── const.cpython-38.pyc
-│   ├── constraint.cpython-38.pyc
-│   ├── constraint.cpython-39.pyc
-│   ├── train.cpython-39.pyc
-│   ├── util.cpython-38.pyc
-│   ├── util.cpython-39.pyc
-│   └── utils.cpython-38.pyc
-├── agent                       #　エージェント
-│   ├── __pycache__
-│   │   ├── model.cpython-38.pyc
-│   │   ├── model.cpython-39.pyc
-│   │   ├── policy.cpython-38.pyc
-│   │   └── policy.cpython-39.pyc
-│   ├── model.py    #　ネットワークやトレーニング方法の定義
-│   └── policy.py   #  方策の定義
-├── conf
-│   └── config.yaml             #　パラメータ管理
-├── const.py                    #  周長制約
-├── env.yml                     #  仮想環境
-├── outputs                     #  出力ファイル
-│   └── 2022-11-14
-│       ├── 15-55-47
-│       │   ├── loss.png
-│       │   ├── reward.png
-│       │   ├── train.log
-│       │   ├── warm_up.GIF
-│       │   └── weight.pth
-│       └── 16-03-59
-│           ├── result.png
-│           ├── reward.png
-│           ├── test.GIF
-│           └── test.log
-│
-├── README.md                   #  ドキュメンテーション
-├── test.py                     #  テスト実行ファイル
-├── train.py                    #  トレーニング実行ファイル
-└── utils.py                    #  グラフ作成など
+└── content               
+   └── drive
+        └── MyDrive
+            └── Colabo Notebooks
+                └── cifar-10-batches-py
+                    ├── batches.meta
+                    ├── data_batch_1
+                    ├── data_batch_2
+                    ├── data_batch_3
+                    ├── data_batch_4
+                    ├── data_batch_5
+                    ├── readme.html
+                    └── test_batch
 ```
 
 ## Import modules
@@ -200,7 +160,6 @@ PATH = './conv_net.pth'
 からなる10の```"labels"```によってアノテーションされています.
 
 なのでunpickleの際に, ```t```には```"labels"```, ```x```には```"data"```を格納しておきます.
-
 
 ## Unpickle
 
@@ -299,7 +258,7 @@ test_data = test_dataset(x_test, t_test, transform=test_transform)
 
 Data Augmentationにはいくつか手法がありますが, 今回はPytorchがサポートしている手法の中の
 
-```RandomVerticalFlip([p])```と```RandomHorizontalFlip([p])```
+```RandomVerticalFlip([p])```と```RandomHorizontalFlip([p])```を使いました
 
 ここで, ```p```は確率でデフォルトは0.1です.
 
@@ -346,6 +305,28 @@ DataLoaderは先ほど作ったDatasetを受け取ってミニバッチを取り
 
 ## AlexNet
 
+いよいよ, ネットワークの実装に入ります.
+
+ますは**AlexNet**です.
+
+**AlexNet**とはILSVRC 2012の優勝モデルで, 当時, コンピュータビジョンにおけるパラダイムシフトを起こしたともいえる革命的なモデルでした.
+
+今回のデータセットにチューニングしたネットワーク構造はこのようになります.
+
+AlexNetでは活性化関数として, ReLU(Rectified Liner Unit)が使用されています. ReLUは下記の式で表されます.
+
+$$
+f(x)=max(0,x)
+$$
+
+旧来のニューラルネットワークでの活性化関数には, シグモイド関数やハイパボリックタンジェントなどが使用されていましたが, これらの飽和型の関数は, 挿入数が増すごとに微分値が小さくなっていくので, 多層になるほど勾配爆発・消失が起こります.
+
+非飽和型のReLUを主に用いるAlexNetでは勾配爆発・消失の回避と, 勾配値が増加することによる学習高速化を達成しました.
+
+![](https://api.axross-recipe.com/attachments/5b3e569f-6c32-4a13-9041-17fabeefb10a/url)
+
+実装コードは以下のようになります.
+
 ```python:source_code.ipynb
 class AlexNet(nn.Module):
     def __init__(self):
@@ -383,6 +364,20 @@ class AlexNet(nn.Module):
 ```
 
 ## ResNet (Plain architecture)
+
+次は**ResNet**です.
+
+**ResNet**とは**Resdual Block(残差ブロック)**と**Shortcut connection**による残差学習で多層かつ高性能であることを達成したモデルである.
+
+詳しくは[こちら](https://arxiv.org/abs/1512.03385)の論文を参照されたい.
+
+実はResNetのResdual Blockは2種類ある.
+
+プレーンアーキテクチャとボトルネックアーキテクチャである.
+
+プレーンアーキテクチャについては, 論文と以下の実装コードを見ていただきたい.
+
+残差ブロックの詳細については次章で説明します.
 
 ```python:source_code.ipynb
 def conv3x3(in_channels, out_channels, stride=1):
@@ -502,6 +497,29 @@ def ResNet34():
 ```
 
 ## ResNet (Bottleneck architecture)
+
+さて, ボトルネックアーキテクチャの実装に入る前に, 残差ブロックについて詳しくみておきましょう！.
+
+下図はResNetの図(左: 残差ブロック, 右: ネットワーク構造)であり, 
+
+残差ブロックとは, 
+
+本来, 学習していもの$\mathcal{F}(x)$に対して, 入力$x$をShortcut Connectionで足しています. これを$\mathcal{H}(x)$と定義します.
+
+ここで$\mathcal{F}(x)$は$x$に対する変化分で非常に小さい値です.
+
+これに対して$x$は入力に対しての恒等写像で大きい値です. 
+
+![](https://api.axross-recipe.com/attachments/df466078-9a59-43af-95ed-158a5a53a4f1/url)
+
+このShortcut Connectionが深層部分にまで接続されているので, 逆伝搬時に大きい誤差を伝搬させ, 勾配爆発・消失を回避できるようになりました.
+
+先程の論文では最大152層のモデルが考案されています.
+
+ResNetはただ多層にできただけでなく, 多層にすることによって性能が落ちてしまうデグレーションの回避もしているところが凄いと思います(笑).
+
+実装コードは以下のとおりです.
+
 
 ```python:source_code.ipynb
 class block(nn.Module):
@@ -647,13 +665,19 @@ def ResNet152(img_channel=3, num_classes=1000):
 
 ## Import model
 
+それでは先程つくったクラスのインスタンスを生成します.
+
+実行したいモデルのコードブロックを実行しておき, クラスを作っておきます. 
+
+そして下記のコードブロック内で実装したいモデルのコメントを外して実行してください.
+
 ```python:source_code.ipynb
 # Import model
 rng = np.random.RandomState(23)
 random_state = 23
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-conv_net = AlexNet()
+# conv_net = AlexNet()
 # conv_net = ResNet18()
 # conv_net = ResNet34()
 # conv_net = ResNet50()
@@ -663,13 +687,87 @@ conv_net = AlexNet()
 conv_net.to(device)
 ```
 
+成功すると次のようなな出力がでます. 以下はAlexNetを実行した場合の例です.
+
+```cmd:output
+AlexNet(
+  (features): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(7, 7), stride=(1, 1), padding=(2, 2))
+    (1): ReLU(inplace=True)
+    (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (3): Conv2d(64, 192, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+    (4): ReLU(inplace=True)
+    (5): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (6): Conv2d(192, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (7): ReLU(inplace=True)
+    (8): Conv2d(384, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (9): ReLU(inplace=True)
+    (10): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (11): ReLU(inplace=True)
+    (12): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (classifier): Sequential(
+    (0): Dropout(p=0.5, inplace=False)
+    (1): Linear(in_features=2304, out_features=4096, bias=True)
+    (2): ReLU(inplace=True)
+    (3): Dropout(p=0.5, inplace=False)
+    (4): Linear(in_features=4096, out_features=4096, bias=True)
+    (5): ReLU(inplace=True)
+    (6): Linear(in_features=4096, out_features=10, bias=True)
+  )
+)
+```
+
+## Prepare TensorBoard
+
+トレーニングまでもう目前です！
+
+トレーニング中の様子を可視化するためにここで**TensorBoard**の準備をしておきます. 
+
+SummaryWriterをインポートし, TensorBoardで出力したいデータの保存場所を決めておきます. 
+
+準備はこれだけです！ 簡単ですね. 
+
+ではいよいよトレーニングに移りましょう！
+
+```python:source_code.ipynb
+from torch.utils.tensorboard import SummaryWriter    
+
+writer = SummaryWriter(log_dir="./logs")
+```
+
 ## Train & Validate
+
+トレーニングの実装コードは以下のようになります. 
+
+```writer```の部分でTensorBoard出力の値を書き込んでいます.
+
+```scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.10)```で学習率減衰で設定できます. 
+
+学習率減衰とは, ある程度学習が収束した時点で, 学習率を小さくする手法です. 
+
+この手法により急激に学習率が向上することが知られています.
+
+今回は
+
+- エポック数```n_epochs = 15```
+
+- 学習率```lr=0.001```
+
+- 最適化手法```optimizer = optim.Adam```
+
+- 損失関数の計算```criterion = nn.CrossEntropyLoss()```
+
+- 学習率減衰```if(epoch==10): scheduler.step()```
+
+で設定しました. 
+
 
 ```python:source_code.ipynb
 from tqdm.notebook import tqdm
 from collections import OrderedDict
 
-n_epochs = 1
+n_epochs = 15
 optimizer = optim.Adam(conv_net.parameters(), lr=0.001)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.10)
 criterion = nn.CrossEntropyLoss()                               
@@ -751,12 +849,21 @@ torch.save(conv_net.state_dict(), PATH)
 
 ## Visualization
 
+トレーニング終了です！
+
+Googleが無償で提供するGPUの使い心地はどうでしたか？
+
+トレーニング終了後, 以下のコードブロックを実行してTensorBoardを立ち上げてみましょう！
+
 ```python:source_code.ipynb
 %load_ext tensorboard
 %tensorboard --logdir ./logs
 ```
 
 ## Test
+
+では, 最後に保存しておいたトレーニングデータをロードしてテストします. 
+
 
 ```python:source_code.ipynb
 conv_net.eval()
