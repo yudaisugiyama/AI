@@ -60,7 +60,7 @@ CIFAR-10のデータセットは[こちら](https://www.cs.toronto.edu/~kriz/cif
 
 ランタイムが変更できているかを確認します.
 
-```python:sourcecode.ipynb
+```python
 !nvidia-smi
 ```
 上記のコマンドブロックを実行して以下のような出力がでれば成功です. 
@@ -91,7 +91,7 @@ Sun Dec 11 10:00:01 2022
 
 ## Directory config
 
-```python:sourcecode.ipynb
+```python
 from google.colab import drive
 drive.mount('/content/drive')
 ```
@@ -130,7 +130,7 @@ DATA_ROOT = "/content/drive/MyDrive/Colab Notebooks/cifar-10-batches-py"
 
 ## Import modules
 
-```python:source_code.ipynb
+```python
 import os, pickle
 import numpy as np
 import pandas as pd
@@ -175,7 +175,7 @@ PATH = './conv_net.pth'
 
 ## Unpickle
 
-```python:source_code.ipynb
+```python
 # Training
 t_train = []
 x_train = []
@@ -211,7 +211,7 @@ t_test, x_test = unpickle(f_test)
 
 データセットに対する前処理を行うクラスを作りインスタンスを生成しています.
 
-```python:source_code.ipynb
+```python
 # Pre process
 data_transform = transforms.Compose([
     transforms.ToTensor()
@@ -341,7 +341,7 @@ $$
 
 実装コードは以下のようになります.
 
-```python:source_code.ipynb
+```python
 class AlexNet(nn.Module):
     def __init__(self):
         super(AlexNet, self).__init__()
@@ -391,7 +391,7 @@ ResNetのResdual Blockにはプレーンアーキテクチャとボトルネッ�
 
 残差ブロックの詳細については次章ボトルネックアーキテクチャを例に説明します！
 
-```python:source_code.ipynb
+```python
 def conv3x3(in_channels, out_channels, stride=1):
     return nn.Conv2d(
         in_channels,
@@ -533,7 +533,7 @@ ResNetはただ多層にできただけでなく, 多層にすることによっ
 実装コードは以下のとおりです.
 
 
-```python:source_code.ipynb
+```python
 class block(nn.Module):
     def __init__(
         self, in_channels, intermediate_channels, identity_downsample=None, stride=1
@@ -683,7 +683,7 @@ def ResNet152(img_channel=3, num_classes=1000):
 
 そして下記のコードブロック内で実装したいモデルのコメントを外して実行してください.
 
-```python:source_code.ipynb
+```python
 # Import model
 rng = np.random.RandomState(23)
 random_state = 23
@@ -742,7 +742,7 @@ SummaryWriterをインポートし, TensorBoardで出力したいデータの保
 
 ではいよいよトレーニングに移りましょう！
 
-```python:source_code.ipynb
+```python
 from torch.utils.tensorboard import SummaryWriter    
 
 writer = SummaryWriter(log_dir="./logs")
@@ -780,7 +780,7 @@ writer = SummaryWriter(log_dir="./logs")
 
 実際のコードは以下のようになります.
 
-```python:source_code.ipynb
+```python
 from tqdm.notebook import tqdm
 from collections import OrderedDict
 
@@ -872,7 +872,7 @@ Googleが無償で提供するGPUの使い心地はどうでしたか？
 
 トレーニング終了後, 以下のコードブロックを実行してTensorBoardを立ち上げてみましょう！
 
-```python:source_code.ipynb
+```python
 %load_ext tensorboard
 %tensorboard --logdir ./logs
 ```
@@ -908,7 +908,7 @@ ResNetでのトレーニングは以下のようになりました.
 ブロック内の```conv_net.load_state_dict(torch.load(PATH)) ```でロードを行います.
 
 
-```python:source_code.ipynb
+```python
 conv_net.eval()
 conv_net.load_state_dict(torch.load(PATH))                         
 
