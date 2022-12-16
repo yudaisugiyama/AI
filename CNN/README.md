@@ -50,16 +50,17 @@ CIFAR-10を使用した画像分類器の生成を**Google Colaboratory**+**Tens
 
 閲覧権限しかないので, 編集する場合はコピーしてください.
 
-使用したcifar-10のデータセットは[こちら](http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz)からダウンロードできます！
+CIFAR-10のデータセットは[こちら](https://www.cs.toronto.edu/~kriz/cifar.html#:~:text=CIFAR%2D10%20python%20version)からダウンロードしてください！
 
 # 調理*
 
-## GPUを設定しよう！
+## GPU settings
 
 まず, ランタイム>ランタイムのタイプを変更>ハードウェア アクセラレータを"GPU"に変更してください.
 
+ランタイムが変更できているかを確認します.
 
-```python:
+```python:sourcecode.ipynb
 !nvidia-smi
 ```
 上記のコマンドブロックを実行して以下のような出力がでれば成功です. 
@@ -88,7 +89,7 @@ Sun Dec 11 10:00:01 2022
 +-----------------------------------------------------------------------------+
 ```
 
-## ディレクトリ構造
+## Directory config
 
 ```python:sourcecode.ipynb
 from google.colab import drive
@@ -98,6 +99,9 @@ drive.mount('/content/drive')
 上記のコマンドブロックを実行してグーグルドライブと接続してください.
 
 ドライブ内のディレクトリ構造は以下のようになります.
+
+先ほどダウンロードして解凍したCIFAR-10データセットを以下のようにグーグルドライブ内の```Colabo Notebooks```ディレクトリ下におきます.
+
 
 ```
 .
@@ -115,6 +119,14 @@ drive.mount('/content/drive')
                     ├── readme.html
                     └── test_batch
 ```
+
+データセットの場所を変えたい場合は次章のコードブロック内の以下の部分(```DATA_ROOT```)を変更してください.
+
+```python
+# Path of cifar-10 dataset
+DATA_ROOT = "/content/drive/MyDrive/Colab Notebooks/cifar-10-batches-py"
+```
+
 
 ## Import modules
 
@@ -147,7 +159,7 @@ PATH = './conv_net.pth'
 
 上のコードブロックを実行して必要なモジュールをインポートします.
 
-ここで一緒に読み込んだcifar-10データをバイトストリームからオブジェクトストリームに変換(unpickle化)するための関数も定義しておきます.
+ここで一緒に読み込んだCIFAR-10データをバイトストリームからオブジェクトストリームに変換(unpickle化)するための関数も定義しておきます.
 
 データセットは
 
@@ -187,9 +199,10 @@ t_test, x_test = unpickle(f_test)
 
 先ほど定義したunpickle関数を使ってデータセットをオブジェクトストリームに変換します.
 
-ここでデータバッチの中のデータはトレーニング用, テストバッチのものをテスト・バリデーション用に用います.
+ここでデータバッチの中のデータはトレーニング用, テストバッチのものをテスト/バリデーション用に用います.
 
 バリデーションとは損失関数の勾配を計算しない"検証"のプロセスです.
+
 一度もトレーニングしていないデータを用いないと汎化性能の検証として意味がないのでテストバッチを用います.
 
 ## Data Augmentation
@@ -311,7 +324,9 @@ DataLoaderは先ほど作ったDatasetを受け取ってミニバッチを取り
 
 **AlexNet**とはILSVRC 2012の優勝モデルで, 当時, コンピュータビジョンにおけるパラダイムシフトを起こしたともいえる革命的なモデルでした.
 
-今回のデータセットにチューニングしたネットワーク構造はこのようになります.
+今回のデータセットにチューニングしたネットワーク構造は以下のようになります.
+
+![](https://api.axross-recipe.com/attachments/5b3e569f-6c32-4a13-9041-17fabeefb10a/url)
 
 AlexNetでは活性化関数として, ReLU(Rectified Liner Unit)が使用されています. ReLUは下記の式で表されます.
 
@@ -323,7 +338,6 @@ $$
 
 非飽和型のReLUを主に用いるAlexNetでは勾配爆発・消失の回避と, 勾配値が増加することによる学習高速化を達成しました.
 
-![](https://api.axross-recipe.com/attachments/5b3e569f-6c32-4a13-9041-17fabeefb10a/url)
 
 実装コードは以下のようになります.
 
@@ -367,17 +381,15 @@ class AlexNet(nn.Module):
 
 次は**ResNet**です.
 
-**ResNet**とは**Resdual Block(残差ブロック)**と**Shortcut connection**による残差学習で多層かつ高性能であることを達成したモデルである.
+**ResNet**とは**Resdual Block(残差ブロック)**と**Shortcut connection**による残差学習で多層かつ高性能であることを達成したモデルです.
 
-詳しくは[こちら](https://arxiv.org/abs/1512.03385)の論文を参照されたい.
+詳しくは[こちら](https://arxiv.org/abs/1512.03385)の論文を参照してみてください.
 
-実はResNetのResdual Blockは2種類ある.
+ResNetのResdual Blockにはプレーンアーキテクチャとボトルネックアーキテクチャの2種類あります.
 
-プレーンアーキテクチャとボトルネックアーキテクチャである.
+プレーンアーキテクチャについては, 論文と以下の実装コードを参照してみてください.
 
-プレーンアーキテクチャについては, 論文と以下の実装コードを見ていただきたい.
-
-残差ブロックの詳細については次章で説明します.
+残差ブロックの詳細については次章ボトルネックアーキテクチャを例に説明します！
 
 ```python:source_code.ipynb
 def conv3x3(in_channels, out_channels, stride=1):
@@ -738,7 +750,7 @@ writer = SummaryWriter(log_dir="./logs")
 
 ## Train & Validate
 
-トレーニングの実装コードは以下のようになります. 
+トレーニングの実装に入ります. 
 
 ```writer```の部分でTensorBoard出力の値を書き込んでいます.
 
@@ -762,6 +774,11 @@ writer = SummaryWriter(log_dir="./logs")
 
 で設定しました. 
 
+学習率減衰の様子は以下のようになります. 10epoch終了後に減衰させています.
+
+![](https://api.axross-recipe.com/attachments/12502e24-a847-452f-bff7-d5b97bd100b2/url)
+
+実際のコードは以下のようになります.
 
 ```python:source_code.ipynb
 from tqdm.notebook import tqdm
@@ -860,9 +877,35 @@ Googleが無償で提供するGPUの使い心地はどうでしたか？
 %tensorboard --logdir ./logs
 ```
 
+### AlexNet
+
+AlexNetでのトレーニングは以下のようになりました.
+
+![](https://api.axross-recipe.com/attachments/7316e003-9bb0-48dc-9abb-a9b428eff2a0/url)
+
+10epoch目直後にTrainとValidationの精度(Train_Acc and Valid_Acc)が急激に向上していることが確認できます.
+
+### ResNet50
+
+ResNetでのトレーニングは以下のようになりました.
+
+![](https://api.axross-recipe.com/attachments/02d43cf1-c37d-4385-a83e-387a66e40f44/url)
+
+同じく学習率減衰の効果が確認できると思います.
+
+しかし, 過学習が起きてトレーニングの精度(Train_Acc)が限りなく100%に近づいてしまい,  12epoch目からバリデーションの精度(Valid_Acc)がほとんど変わらなくなってしまいました.
+
+それでも, validationの精度はAlexNetより高そうですね(笑)
+
+次章でテストの結果を見てみましょう.
+
 ## Test
 
 では, 最後に保存しておいたトレーニングデータをロードしてテストします. 
+
+下記のコードブロックを実行してください.
+
+ブロック内の```conv_net.load_state_dict(torch.load(PATH)) ```でロードを行います.
 
 
 ```python:source_code.ipynb
@@ -886,3 +929,39 @@ writer.close()
 
 print("Accuracy on test set: {:.3f}".format(test_true_num/test_num))
 ```
+
+それぞれの正確性は以下のようになります.
+
+### AlexNet
+
+```cmd:output
+Accuracy on test set: 0.779
+```
+
+### ResNet50
+
+```cmd:output
+Accuracy on test set: 0.792
+```
+
+AlexNetで**77.9%**, ResNetで**79.2%** という結果になりました.
+
+今回は大まかに下記のような学習条件でしたが, ソースコードを参考に学習条件を変えてみて, それぞれのハイパーパラメータがどのように学習に効いてくるのか, などにご活用いただければ幸いです.
+
+- エポック数```n_epochs = 15```
+
+- バッチサイズ```batch_size = 500```
+
+- 学習率```lr=0.001```
+
+- 最適化手法```optimizer = optim.Adam```
+
+- 損失関数の計算```criterion = nn.CrossEntropyLoss()```
+
+- 学習率減衰```if(epoch==10): scheduler.step()```
+
+最後に僕の所感ですが, 学習率が可変な最適化手法であるAdamに対しても学習率減衰がしっかり活躍していることが新しい発見でした.
+
+今回の結果ではResNetが過学習になってしまっているので, 是非改善の方法を探索していただければなと思います.
+
+最後までご覧いただきありがとうございます^^
