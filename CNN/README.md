@@ -516,7 +516,13 @@ def ResNet34():
 
 残差ブロックとは, 
 
-本来, 学習していもの$\mathcal{F}(x)$に対して, 入力$x$をShortcut Connectionで足しています. これを$\mathcal{H}(x)$と定義します.
+本来, 学習したいもの
+$\mathcal{F}(x)$
+に対して, 入力
+$x$
+をShortcut Connectionで足しています. これを
+$\mathcal{H}(x)$
+と定義します.
 
 ここで$\mathcal{F}(x)$は$x$に対する変化分で非常に小さい値です.
 
